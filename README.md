@@ -99,9 +99,46 @@ Now let's test the log files:
     [astling@amc-tesla ~]$ bsub -e script.err -o script.out "perl some_script.pl"
 
 Look at output of each:
+ 
+    [astling@amc-tesla ~]$ cat script.err
+    This is an error message
 
-    blah  
-    blah
+The error file just has our message and nothing more. The .out file contains a little more information
+
+    [astling@amc-tesla ~]$ cat script.outa
+    Sender: LSF System <hpcadmin@compute15>
+    Subject: Job 72222: <perl some_script.pl> Done
+    
+    Job <perl some_script.pl> was submitted from host <amc-tesla> by user <astling> in cluster <amctesla_cluster1>.
+    Job was executed on host(s) <compute15>, in queue <normal>, as user <astlingd> in cluster <amctesla_cluster1>.
+    </vol4/home/astling> was used as the home directory.
+    </vol4/home/astling> was used as the working directory.
+    Started at Fri Feb 19 14:02:40 2016
+    Results reported at Fri Feb 19 14:03:40 2016
+    
+    Your job looked like:
+    
+    ------------------------------------------------------------
+    # LSBATCH: User input
+    perl some_script.pl
+    ------------------------------------------------------------
+    
+    Successfully completed.
+    
+    Resource usage summary:
+    
+        CPU time   :      0.08 sec.
+        Max Processes  :         3
+        Max Threads    :         4
+    
+    The output (if any) follows:
+    
+    Hello World
+    
+    
+    PS:
+    
+    Read file <script.err> for stderr output of this job.
 
 
 If you use the script routinely, the log files will get overwritten each time. To keep a record of each run, you can append the job ID to the end of the file by using the `%J` variable. This way you can link up the log file to each run.
@@ -248,7 +285,7 @@ Submitting a job array
     #BSUB -J ShortName[1-10]
     #BSUB -e logs/test_%J.log
     #BSUB -o logs/test_%J.out
-    #BSUB -P Collaborators_name
+    #BSUB -P Name_of_PI
     
     SAMPLES=(
     apple
@@ -268,4 +305,42 @@ Submitting a job array
     echo "Mmmm..." $fruit
     
 
+The job can be submitted as before. The queueing system interprets the header and submits 10 jobs to the queue.
+
+    [astlingd@amc-tesla ~]$ bsub < example.sh
+    Job <72207> is submitted to default queue <normal>.
+    [astling@amc-tesla ~]$ bjobs
+    JOBID   USER    STAT  QUEUE      FROM_HOST   EXEC_HOST   JOB_NAME   SUBMIT_TIME
+    72207   astling PEND  normal     amc-tesla               *rtName[1] Feb 19 14:14
+    72207   astling PEND  normal     amc-tesla               *rtName[2] Feb 19 14:14
+    72207   astling PEND  normal     amc-tesla               *rtName[3] Feb 19 14:14
+    72207   astling PEND  normal     amc-tesla               *rtName[4] Feb 19 14:14
+    72207   astling PEND  normal     amc-tesla               *rtName[5] Feb 19 14:14
+    72207   astling PEND  normal     amc-tesla               *rtName[6] Feb 19 14:14
+    72207   astling PEND  normal     amc-tesla               *rtName[7] Feb 19 14:14
+    72207   astling PEND  normal     amc-tesla               *rtName[8] Feb 19 14:14
+    72207   astling PEND  normal     amc-tesla               *rtName[9] Feb 19 14:14
+    72207   astling PEND  normal     amc-tesla               *tName[10] Feb 19 14:14
+    [astling@amc-tesla ~]$ bjobs
+    JOBID   USER    STAT  QUEUE      FROM_HOST   EXEC_HOST   JOB_NAME   SUBMIT_TIME
+    72207   astling RUN   normal     amc-tesla   compute00   *rtName[1] Feb 19 14:14
+    72207   astling RUN   normal     amc-tesla   compute03   *rtName[2] Feb 19 14:14
+    72207   astling RUN   normal     amc-tesla   compute05   *rtName[3] Feb 19 14:14
+    72207   astling RUN   normal     amc-tesla   compute10   *rtName[4] Feb 19 14:14
+    72207   astling RUN   normal     amc-tesla   compute14   *rtName[5] Feb 19 14:14
+    72207   astling RUN   normal     amc-tesla   compute13   *rtName[6] Feb 19 14:14
+    72207   astling RUN   normal     amc-tesla   compute15   *rtName[7] Feb 19 14:14
+    72207   astling RUN   normal     amc-tesla   compute12   *rtName[8] Feb 19 14:14
+    72207   astling RUN   normal     amc-tesla   compute11   *rtName[9] Feb 19 14:14
+    72207   astling RUN   normal     amc-tesla   compute07   *tName[10] Feb 19 14:14
+
+If we need to kill one of the jobs we can just give it the array index like so:
+
+    bkill 72207[4]      # kill job 4
+    bkill 72207[4-7]    # kill a range of jobs
+    bkill 72207[4,6,8]  # kill select jobs
+
+These jobs can be restarted by modifying the job submission header: `-J ShortName[4,6,8]`. This is useful in cases where there is a problem with one of the samples. You can correct the problem and just resubmit the run for that sample rather than the whole array.
+
 If you have a large number of jobs to run and/or they will consume significant resources, it's a good idea to limit the number of jobs that can run at once by appending a `%n` to the end of the job name like so `-J ShortName[1-10]%3`. This will allow only three jobs to run at a time. The others will wait in the queue until it is their turn.
+
