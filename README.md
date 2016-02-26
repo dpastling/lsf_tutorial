@@ -201,7 +201,7 @@ To prevent your job from running on multiple nodes use `span`.
 
 If you need to adjust the resource limits on a running job, use the `bmod` command. For example suppose you requested 10 GB of RAM and it turns out your job needs only needs 1 GB of RAM. For this we will need to know our JOBID
 
-    bmod 72221 "select[mem>1] rusage[mem=1]"
+    bmod 72221 "-R select[mem>1] rusage[mem=1]"
 
 
 How to see what resources are available
