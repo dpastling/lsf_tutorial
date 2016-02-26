@@ -105,7 +105,7 @@ Look at output of each:
 
 The error file just has our message and nothing more. The .out file contains a little more information
 
-    [astling@amc-tesla ~]$ cat script.outa
+    [astling@amc-tesla ~]$ cat script.out
     Sender: LSF System <hpcadmin@compute15>
     Subject: Job 72222: <perl some_script.pl> Done
     
